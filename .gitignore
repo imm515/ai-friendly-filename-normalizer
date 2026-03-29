@@ -1,0 +1,19 @@
+# 忽略所有文件
+*
+
+# 仅上传以下文件：
+# Python 脚本
+!*.py
+!*.pyw
+
+# README 文档
+!README.md
+
+# Git 配置文件
+!.gitignore
+
+# 允许访问子目录
+!*/
+
+# 明确忽略日志文件
+*.log
