@@ -38,7 +38,7 @@ def setup_logging(log_file: str = None):
     
     # 文件处理器（如果指定了日志文件）
     if log_file:
-        file_handler = logging.FileHandler(log_file, encoding='utf-8')
+        file_handler = logging.FileHandler(log_file, mode='w', encoding='utf-8')
         file_handler.setLevel(logging.INFO)
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
@@ -264,11 +264,11 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 示例：
-  python ai_friendly_filename_normalizer.py                    # 处理当前目录
+  python ai_friendly_filename_normalizer.py                    # 处理当前目录，日志默认输出到 ai_friendly_filename_normalizer.log
   python ai_friendly_filename_normalizer.py -d /path/to/dir    # 处理指定目录
   python ai_friendly_filename_normalizer.py --dry-run          # 试运行模式
-  python ai_friendly_filename_normalizer.py -l rename.log      # 指定日志文件
-  python ai_friendly_filename_normalizer.py -d /path/to/dir --dry-run --log rename.log
+  python ai_friendly_filename_normalizer.py -l custom.log      # 指定日志文件名
+  python ai_friendly_filename_normalizer.py --no-log           # 不生成日志文件，只输出到控制台
         """
     )
     
@@ -280,8 +280,14 @@ def main():
     
     parser.add_argument(
         '-l', '--log',
-        default=None,
-        help='日志文件路径（可选，默认只输出到控制台）'
+        default='ai_friendly_filename_normalizer.log',
+        help='日志文件路径（默认：ai_friendly_filename_normalizer.log，每次运行会覆盖）'
+    )
+    
+    parser.add_argument(
+        '--no-log',
+        action='store_true',
+        help='不生成日志文件，只输出到控制台'
     )
     
     parser.add_argument(
@@ -294,10 +300,11 @@ def main():
     
     # 设置日志系统
     global logger
-    logger = setup_logging(args.log)
+    log_file = None if args.no_log else args.log
+    logger = setup_logging(log_file)
     
-    if args.log:
-        logger.info(f"日志文件: {args.log}")
+    if log_file:
+        logger.info(f"日志文件: {log_file}")
     
     # 检查目录是否存在
     target_dir = Path(args.dir).resolve()
