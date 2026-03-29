@@ -185,13 +185,13 @@ class FileNameNormalizer:
                 logger.info(f"[试运行] 将重命名: {old_path.name} -> {new_path.name}")
             else:
                 old_path.rename(new_path)
-                logger.info(f"✓ 重命名成功: {old_path.name} -> {new_path.name}")
+                logger.info(f"[OK] 重命名成功: {old_path.name} -> {new_path.name}")
                 
             self.rename_count += 1
             return True
             
         except Exception as e:
-            logger.error(f"✗ 重命名失败: {old_path.name} - {str(e)}")
+            logger.error(f"[FAIL] 重命名失败: {old_path.name} - {str(e)}")
             self.error_count += 1
             return False
     
@@ -212,9 +212,38 @@ class FileNameNormalizer:
         logger.info(f"发现 {len(items)} 个需要重命名的项目")
         logger.info("-" * 60)
         
+        # 路径映射表：记录已重命名的路径
+        # key: 旧路径, value: 新路径（实际存在的路径）
+        renamed_paths = {}
+        
         # 执行重命名
         for old_path, new_path in items:
-            self.rename_item(old_path, new_path)
+            # 检查路径是否因为父目录重命名而改变
+            actual_old_path = old_path
+            for old_parent, new_parent in renamed_paths.items():
+                # 如果 old_path 的父目录被重命名了，需要更新路径
+                if old_path.is_relative_to(old_parent):
+                    # 计算相对路径
+                    rel_path = old_path.relative_to(old_parent)
+                    # 构建新的实际路径
+                    actual_old_path = new_parent / rel_path
+                    break
+            
+            # 检查新路径的父目录是否被重命名
+            actual_new_path = new_path
+            for old_parent, new_parent in renamed_paths.items():
+                # 如果 new_path 的父目录被重命名了，需要更新路径
+                if new_path.is_relative_to(old_parent):
+                    # 计算相对路径
+                    rel_path = new_path.relative_to(old_parent)
+                    # 构建新的目标路径
+                    actual_new_path = new_parent / rel_path
+                    break
+            
+            # 执行重命名
+            if self.rename_item(actual_old_path, actual_new_path):
+                # 记录成功的重命名
+                renamed_paths[old_path] = actual_new_path
             
         # 输出统计
         logger.info("=" * 60)
